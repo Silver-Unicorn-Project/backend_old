@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import F, Sum
 from django.urls import reverse
 from phonenumber_field.modelfields import PhoneNumberField
+from mptt.models import MPTTModel, TreeForeignKey
 
 from users.models import User
 
@@ -26,6 +27,7 @@ class Products(models.Model):
     )
     picture = models.FileField(
         blank=True,
+        null=True,
         verbose_name='Изображениe товаров'
     )
     description = models.TextField('Описание товара')
@@ -35,7 +37,7 @@ class Products(models.Model):
         verbose_name='Публикация'
     )
     created_at = models.DateTimeField('Создано', auto_now_add=True)
-    category = models.ForeignKey(
+    category = TreeForeignKey(
         'Category',
         related_name='category_products',
         on_delete=models.SET_NULL,
@@ -43,6 +45,7 @@ class Products(models.Model):
         blank=True,
         verbose_name='Категории'
     )
+
     rating = models.IntegerField(
         verbose_name='Рейтинг',
         null=True,
@@ -61,32 +64,36 @@ class Products(models.Model):
         return reverse('card', kwargs={'card_id': self.pk})
 
 
-class Category(models.Model):
+class Category(MPTTModel):
     title = models.CharField(
         max_length=100,
         db_index=True,
         verbose_name='Категории'
     )
     slug = models.SlugField('Слаг', unique=True)
-    category = models.ForeignKey(
+    parent = TreeForeignKey(
         'self',
-        on_delete=models.CASCADE,
-        verbose_name='Категория',
-        related_name='sub_categories',
-        blank=True,
+        on_delete=models.PROTECT,
         null=True,
+        blank=True,
+        related_name='sub_categories',
+        db_index=True,
+        verbose_name='Родительская категория'
     )
 
+    class MPTTMeta:
+        order_insertion_by = ['title']
+
     class Meta:
+        unique_together = [['parent', 'slug']]
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
-        ordering = ('title',)
+
+    def get_absolute_url(self):
+        return reverse('category', args=[str(self.slug)])
 
     def __str__(self):
         return self.title
-
-    def get_absolute_url(self):
-        return reverse('category', kwargs={'cat_id': self.pk})
 
 
 class ProductsPicture(models.Model):
@@ -269,8 +276,8 @@ class ProductReview(models.Model):
         verbose_name='Рейтинг',
         null=False,
         validators=(
-            MinValueValidator(1, 'Минимум 1',),
-            MaxValueValidator(5, 'Максимум 5',)
+            MinValueValidator(1, 'Минимум 1', ),
+            MaxValueValidator(5, 'Максимум 5', )
         ),
     )
 

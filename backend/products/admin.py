@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from .models import (Articles, Category, Favorite, FavoriteItem, Order,
                      OrderItem, ProductReview, Products, ProductsPicture,
                      Status)
+from django_mptt_admin.admin import DjangoMpttAdmin
 
 
 class ProductsPictureAdmin(admin.StackedInline):
@@ -12,10 +13,8 @@ class ProductsPictureAdmin(admin.StackedInline):
 
 
 @admin.register(Category)
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('id', 'title')
-    list_display_links = ('title',)
-    search_fields = ('title',)
+class CategoryAdmin(DjangoMpttAdmin):
+    prepopulated_fields = {'slug': ('title',)}
 
 
 @admin.register(Products)
@@ -41,11 +40,6 @@ class ProductAdmin(admin.ModelAdmin):
 
     class Meta:
         model = Products
-
-
-# @admin.register(ProductsPicture)
-# class ProductsPictureAdmin(admin.ModelAdmin):
-#     pass
 
 
 @admin.register(Status)

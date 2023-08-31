@@ -50,7 +50,9 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djoser',
     'drf_yasg',
-    'debug_toolbar'
+    'debug_toolbar',
+    'mptt',
+    'django_mptt_admin',
 ]
 
 MIDDLEWARE = [
